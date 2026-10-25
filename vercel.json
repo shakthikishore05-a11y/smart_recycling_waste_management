@@ -3,16 +3,12 @@
   "services": {
     "frontend": {
       "root": "frontend/",
-      "rewrites": [
-        {
-          "source": "/(.*)",
-          "destination": "/index.html"
-        }
-      ]
+      "framework": "vite"
     },
     "backend": {
       "root": "backend/",
-      "entrypoint": "app.main:app"
+      "framework": "fastapi",
+      "entrypoint": "main:app"
     }
   },
   "rewrites": [
