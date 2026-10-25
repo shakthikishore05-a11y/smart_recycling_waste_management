@@ -1,0 +1,107 @@
+{
+  "dataset_split": "Held-out Test Set (15%)",
+  "classes": [
+    "cardboard",
+    "glass",
+    "metal",
+    "paper",
+    "plastic",
+    "trash"
+  ],
+  "total_test_samples": 36,
+  "overall_accuracy": 0.9722,
+  "metrics_per_class": {
+    "cardboard": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "support": 6
+    },
+    "glass": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "support": 6
+    },
+    "metal": {
+      "precision": 1.0,
+      "recall": 0.8333,
+      "f1_score": 0.9091,
+      "support": 6
+    },
+    "paper": {
+      "precision": 0.8571,
+      "recall": 1.0,
+      "f1_score": 0.9231,
+      "support": 6
+    },
+    "plastic": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "support": 6
+    },
+    "trash": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "support": 6
+    }
+  },
+  "macro_avg": {
+    "precision": 0.9762,
+    "recall": 0.9722,
+    "f1_score": 0.972
+  },
+  "confusion_matrix": [
+    [
+      6,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      6,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      5,
+      1,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      6,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      6,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      6
+    ]
+  ],
+  "notes": "Verified against held-out samples. Academic TrashNet standard classes."
+}

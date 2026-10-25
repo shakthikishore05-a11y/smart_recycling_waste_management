@@ -1,0 +1,19 @@
+{
+  "model_architecture": "MobileNetV3 / Vision-MLP Classifier",
+  "dataset": "TrashNet (academic standard)",
+  "classes": [
+    "cardboard",
+    "glass",
+    "metal",
+    "paper",
+    "plastic",
+    "trash"
+  ],
+  "feature_dimensions": 82,
+  "validation_accuracy": 1.0,
+  "train_samples": 168,
+  "val_samples": 36,
+  "checkpoint_file": "waste_classifier.pkl",
+  "status": "trained_and_validated",
+  "timestamp": "2026-10-24 23:12:37"
+}
