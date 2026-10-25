@@ -7,8 +7,15 @@ User Analytics, Gamification, Directory, Assistant, Admin, and Security Isolatio
 import unittest
 import io
 import os
+import sys
+from pathlib import Path
 from PIL import Image
 from fastapi.testclient import TestClient
+
+# Ensure backend root is in sys.path regardless of working directory
+backend_dir = Path(__file__).resolve().parent
+if str(backend_dir) not in sys.path:
+    sys.path.insert(0, str(backend_dir))
 
 from app.main import app
 from app.database import SessionLocal

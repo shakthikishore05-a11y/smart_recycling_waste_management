@@ -41,6 +41,7 @@ origins = [
     "http://127.0.0.1:5173",
     "http://localhost:3000",
     "http://localhost:8000",
+    "https://smart-recycling-waste-management.vercel.app",
     "*"
 ]
 
@@ -52,10 +53,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount uploads static directory
-upload_dir = Path("./uploads")
-upload_dir.mkdir(parents=True, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=str(upload_dir)), name="uploads")
+# Mount uploads static directory safely (use /tmp/uploads on Vercel)
+upload_dir_env = os.getenv("UPLOAD_DIR")
+if upload_dir_env:
+    upload_dir = Path(upload_dir_env)
+elif os.getenv("VERCEL"):
+    upload_dir = Path("/tmp/uploads")
+else:
+    upload_dir = Path("./uploads")
+
+try:
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    app.mount("/uploads", StaticFiles(directory=str(upload_dir)), name="uploads")
+except Exception as e:
+    print(f"[Startup] Uploads mount notice: {e}")
 
 # Include API Routers
 app.include_router(auth.router)

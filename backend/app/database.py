@@ -5,7 +5,15 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./waste_management.db")
+# Default to /tmp SQLite on Vercel serverless environment (where root is read-only)
+is_vercel = bool(os.getenv("VERCEL"))
+default_db = "sqlite:////tmp/waste_management.db" if is_vercel else "sqlite:///./waste_management.db"
+
+DATABASE_URL = os.getenv("DATABASE_URL", default_db)
+
+# Normalize postgres:// to postgresql:// for SQLAlchemy 2.0+ compatibility (e.g. from Neon / Supabase)
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
 # SQLite connection args
 connect_args = {}

@@ -102,10 +102,33 @@ cd c:\Users\Thirumagal\Documents\smart_waste_managment\backend
 | **Frontend Dev Server** | `http://localhost:5173/` | HTTP 200 Live | Active background task serving Vite v5.4.21. |
 | **API Proxy** | `http://localhost:5173/api/health` | HTTP 200 Proxy OK | Vite reverse-proxy correctly forwarding requests to port 8000. |
 | **Browser Launch** | `Start-Process http://localhost:5173` | Executed | Application opened in default desktop browser. |
+| **Vercel Services Config** | `vercel.json` | CONFIGURED & VERIFIED | Schema validated against official Vercel OpenAPI schema. Multi-service routing for `frontend/` (Vite) and `backend/` (FastAPI). |
+| **Model Path Resolution** | `backend/app/ml/classifier.py` | RELATIVE RESOLUTION | Model path resolved relative to `__file__` (`backend/app/ml/waste_classifier.pkl`), verified from both root and subfolders. |
+| **Production DB & Drivers** | `backend/app/database.py` & `requirements.txt` | POSTGRESQL READY | Added `psycopg2-binary`, `python-dotenv`, `email-validator`, URL schema normalization (`postgres://` -> `postgresql://`), and `/tmp` SQLite fallback. |
 
 ---
 
-## 6. Upcoming Implementation Milestones (Optional Enhancements)
+## 6. Vercel Production Deployment Architecture
+
+```
+                  Public Ingress: https://smart-recycling-waste-management.vercel.app
+                                              │
+                      ┌───────────────────────┴───────────────────────┐
+                      │                                               │
+               /api/*, /docs, /uploads/*                              /(.*)
+                      │                                               │
+                      ▼                                               ▼
+             Vercel Python Service                         Vercel Frontend Service
+           (root: backend/, FastAPI)                         (root: frontend/, Vite)
+                      │
+            Persistent PostgreSQL
+           (Neon / Supabase / Vercel DB)
+```
+
+---
+
+## 7. Upcoming Implementation Milestones (Optional Enhancements)
 - **Optional External LLM Key**: If an `OPENAI_API_KEY` or `GEMINI_API_KEY` is provided in `.env`, the assistant can optionally route queries beyond the built-in knowledge base. (Current built-in knowledge base handles common waste dilemmas out of the box with zero external dependencies).
-- **PostgreSQL / Supabase Migration**: For cloud deployment, update `DATABASE_URL` in `.env` from SQLite to PostgreSQL.
+- **PostgreSQL / Supabase Migration**: Set `DATABASE_URL` in Vercel Environment Variables to link persistent database.
+
 

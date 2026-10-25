@@ -18,8 +18,18 @@ from app.ml.model_def import TRASHNET_CLASSES
 
 router = APIRouter(prefix="/api/v1", tags=["Waste Classification"])
 
-UPLOAD_DIR = Path(os.getenv("UPLOAD_DIR", "./uploads"))
-UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+upload_dir_env = os.getenv("UPLOAD_DIR")
+if upload_dir_env:
+    UPLOAD_DIR = Path(upload_dir_env)
+elif os.getenv("VERCEL"):
+    UPLOAD_DIR = Path("/tmp/uploads")
+else:
+    UPLOAD_DIR = Path("./uploads")
+
+try:
+    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+except Exception:
+    pass
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5 MB
 
 SUPPORTED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/jpg"]

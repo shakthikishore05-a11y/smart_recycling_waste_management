@@ -129,9 +129,24 @@ RECYCLING_KNOWLEDGE_BASE = {
     }
 }
 
+DEFAULT_MODEL_PATH = Path(__file__).resolve().parent / "waste_classifier.pkl"
+
 class WasteClassifierService:
-    def __init__(self, model_path: str = "./app/ml/waste_classifier.pkl", threshold: float = 0.60):
-        self.model_path = model_path
+    def __init__(self, model_path: Optional[str] = None, threshold: float = 0.60):
+        # Resolve model path robustly relative to source files
+        resolved_path = DEFAULT_MODEL_PATH
+        if model_path:
+            p = Path(model_path)
+            if p.is_file():
+                resolved_path = p
+            elif (Path(__file__).resolve().parent / p.name).is_file():
+                resolved_path = Path(__file__).resolve().parent / p.name
+            elif (Path(__file__).resolve().parent.parent.parent / str(model_path).lstrip("./\\")).is_file():
+                resolved_path = Path(__file__).resolve().parent.parent.parent / str(model_path).lstrip("./\\")
+            elif p.is_absolute():
+                resolved_path = p
+                
+        self.model_path = str(resolved_path)
         self.threshold = threshold
         self.classes = TRASHNET_CLASSES
         self.model = None
@@ -221,7 +236,7 @@ _classifier_instance = None
 def get_classifier() -> WasteClassifierService:
     global _classifier_instance
     if _classifier_instance is None:
-        model_path = os.getenv("MODEL_WEIGHTS_PATH", "./app/ml/waste_classifier.pkl")
+        model_path = os.getenv("MODEL_WEIGHTS_PATH")
         threshold = float(os.getenv("CONFIDENCE_THRESHOLD", "0.60"))
         _classifier_instance = WasteClassifierService(model_path=model_path, threshold=threshold)
     return _classifier_instance
