@@ -1,5 +1,6 @@
 import os
 import re
+import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
@@ -137,27 +138,35 @@ def send_chat_message(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    # Save user message
-    user_msg = ChatMessage(
-        user_id=current_user.id,
-        role="user",
-        content=msg_in.content.strip()
-    )
-    db.add(user_msg)
-    
-    # Generate assistant answer
     reply_text = generate_assistant_response(msg_in.content, db)
-    
-    asst_msg = ChatMessage(
-        user_id=current_user.id,
-        role="assistant",
-        content=reply_text
-    )
-    db.add(asst_msg)
-    
-    db.commit()
-    db.refresh(asst_msg)
-    return asst_msg
+    try:
+        # Save user message
+        user_msg = ChatMessage(
+            user_id=current_user.id,
+            role="user",
+            content=msg_in.content.strip()
+        )
+        db.add(user_msg)
+        
+        asst_msg = ChatMessage(
+            user_id=current_user.id,
+            role="assistant",
+            content=reply_text
+        )
+        db.add(asst_msg)
+        
+        db.commit()
+        db.refresh(asst_msg)
+        return asst_msg
+    except Exception as e:
+        db.rollback()
+        print(f"[Assistant] DB notice: {e}")
+        return ChatMessageOut(
+            id=int(datetime.datetime.utcnow().timestamp() * 1000),
+            role="assistant",
+            content=reply_text,
+            created_at=datetime.datetime.utcnow()
+        )
 
 @router.delete("/history", status_code=status.HTTP_204_NO_CONTENT)
 def clear_chat_history(
