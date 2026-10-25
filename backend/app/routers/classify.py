@@ -18,10 +18,25 @@ from app.ml.model_def import TRASHNET_CLASSES
 
 router = APIRouter(prefix="/api/v1", tags=["Waste Classification"])
 
+def get_safe_upload_dir() -> Path:
+    upload_dir_env = os.getenv("UPLOAD_DIR")
+    if upload_dir_env:
+        p = Path(upload_dir_env)
+    elif os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME") or not os.access(".", os.W_OK):
+        p = Path("/tmp/uploads")
+    else:
+        p = Path("./uploads")
+    try:
+        p.mkdir(parents=True, exist_ok=True)
+    except Exception:
+        p = Path("/tmp/uploads")
+        p.mkdir(parents=True, exist_ok=True)
+    return p
+
 upload_dir_env = os.getenv("UPLOAD_DIR")
 if upload_dir_env:
     UPLOAD_DIR = Path(upload_dir_env)
-elif os.getenv("VERCEL"):
+elif os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME") or not os.access(".", os.W_OK):
     UPLOAD_DIR = Path("/tmp/uploads")
 else:
     UPLOAD_DIR = Path("./uploads")
@@ -80,56 +95,64 @@ async def classify_waste_image(
             detail=f"Image processing failed: {str(e)}"
         )
         
-    # Save image to storage
+    # Save image to storage safely
     file_ext = Path(file.filename or "image.jpg").suffix.lower()
     if file_ext not in [".jpg", ".jpeg", ".png", ".webp"]:
         file_ext = ".jpg"
     unique_filename = f"{uuid.uuid4().hex}{file_ext}"
-    saved_file_path = UPLOAD_DIR / unique_filename
-    
-    with open(saved_file_path, "wb") as f:
-        f.write(contents)
-        
     web_image_path = f"/uploads/{unique_filename}"
+    
+    try:
+        upload_dir = get_safe_upload_dir()
+        saved_file_path = upload_dir / unique_filename
+        with open(saved_file_path, "wb") as f:
+            f.write(contents)
+    except Exception as e:
+        print(f"[Classify] Disk save notice: {e}")
+        
     scan_id = None
     
     # Save to user history if authenticated
     if current_user:
-        scan_record = WasteScan(
-            user_id=current_user.id,
-            image_path=web_image_path,
-            original_filename=file.filename,
-            predicted_category=prediction_result["predicted_category"],
-            display_name=prediction_result["display_name"],
-            confidence=prediction_result["confidence"],
-            is_confident=prediction_result["is_confident"],
-            model_identifier=prediction_result["model_identifier"],
-            classification_type=prediction_result["classification_type"],
-            recommendation_data=prediction_result
-        )
-        db.add(scan_record)
-        
-        # Award 10 points for performing a scan
-        current_user.eco_points += 10
-        
-        # Update challenge progress
-        scan_challenges = db.query(UserChallenge).filter(
-            UserChallenge.user_id == current_user.id,
-            UserChallenge.is_completed == False,
-            UserChallenge.challenge_code.in_(["scan_first_waste", "scan_five_items"])
-        ).all()
-        
-        total_scans = db.query(WasteScan).filter(WasteScan.user_id == current_user.id).count() + 1
-        for ch in scan_challenges:
-            ch.progress = min(ch.target, total_scans)
-            if ch.progress >= ch.target:
-                ch.is_completed = True
-                ch.completed_at = datetime.datetime.utcnow()
-                current_user.eco_points += ch.points_reward
-                
-        db.commit()
-        db.refresh(scan_record)
-        scan_id = scan_record.id
+        try:
+            scan_record = WasteScan(
+                user_id=current_user.id,
+                image_path=web_image_path,
+                original_filename=file.filename,
+                predicted_category=prediction_result["predicted_category"],
+                display_name=prediction_result["display_name"],
+                confidence=prediction_result["confidence"],
+                is_confident=prediction_result["is_confident"],
+                model_identifier=prediction_result["model_identifier"],
+                classification_type=prediction_result["classification_type"],
+                recommendation_data=prediction_result
+            )
+            db.add(scan_record)
+            
+            # Award 10 points for performing a scan
+            current_user.eco_points += 10
+            
+            # Update challenge progress
+            scan_challenges = db.query(UserChallenge).filter(
+                UserChallenge.user_id == current_user.id,
+                UserChallenge.is_completed == False,
+                UserChallenge.challenge_code.in_(["scan_first_waste", "scan_five_items"])
+            ).all()
+            
+            total_scans = db.query(WasteScan).filter(WasteScan.user_id == current_user.id).count() + 1
+            for ch in scan_challenges:
+                ch.progress = min(ch.target, total_scans)
+                if ch.progress >= ch.target:
+                    ch.is_completed = True
+                    ch.completed_at = datetime.datetime.utcnow()
+                    current_user.eco_points += ch.points_reward
+                    
+            db.commit()
+            db.refresh(scan_record)
+            scan_id = scan_record.id
+        except Exception as db_err:
+            db.rollback()
+            print(f"[Classify] DB save scan notice: {db_err}")
         
     return {
         "scan_id": scan_id,

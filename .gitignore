@@ -47,3 +47,5 @@ playwright-report/
 
 .vercel
 .env*
+
+test_live_api.py

@@ -5,9 +5,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Default to /tmp SQLite on Vercel serverless environment (where root is read-only)
-is_vercel = bool(os.getenv("VERCEL"))
-default_db = "sqlite:////tmp/waste_management.db" if is_vercel else "sqlite:///./waste_management.db"
+# Default to /tmp SQLite on Vercel/serverless environments (where root is read-only)
+is_serverless = bool(os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME") or not os.access(".", os.W_OK))
+default_db = "sqlite:////tmp/waste_management.db" if is_serverless else "sqlite:///./waste_management.db"
 
 DATABASE_URL = os.getenv("DATABASE_URL", default_db)
 

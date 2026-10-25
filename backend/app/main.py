@@ -57,7 +57,7 @@ app.add_middleware(
 upload_dir_env = os.getenv("UPLOAD_DIR")
 if upload_dir_env:
     upload_dir = Path(upload_dir_env)
-elif os.getenv("VERCEL"):
+elif os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME") or not os.access(".", os.W_OK):
     upload_dir = Path("/tmp/uploads")
 else:
     upload_dir = Path("./uploads")
