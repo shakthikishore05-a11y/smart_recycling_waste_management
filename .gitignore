@@ -28,6 +28,7 @@ dist-ssr/
 *.sqlite3
 
 # Uploads directory (keep directory tracked with .gitkeep)
+uploads/
 backend/uploads/*
 !backend/uploads/.gitkeep
 
